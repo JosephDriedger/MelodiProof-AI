@@ -4,3 +4,10 @@ Data/
 .idea/
 .venv/
 */spectogram_model.h5
+spectrogram_classifier.h5
+build/
+dist/
+installer_output/
+*.spec
+hook_tensorflow.py
+hook_runtime.py

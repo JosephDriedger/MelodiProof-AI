@@ -1,21 +1,25 @@
 import os
+import sys
 import tkinter as tk
 import numpy as np
 from tkinter import ttk
 from PIL import Image, ImageTk
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+import onnxruntime as ort
 import pygame  # For audio playback
+
+# Resolve base path for bundled resources (PyInstaller) or source directory
+BASE_DIR = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 
 # Constants
 IMG_HEIGHT, IMG_WIDTH = 128, 128
-SPECTROGRAM_DIR = "App_Spectrograms"
-COVERS_DIR = "App_Covers"
-MP3_DIR = "App_Audio"
-MODEL_PATH = "spectrogram_classifier.h5"
+SPECTROGRAM_DIR = os.path.join(BASE_DIR, "App_Spectrograms")
+COVERS_DIR = os.path.join(BASE_DIR, "App_Covers")
+MP3_DIR = os.path.join(BASE_DIR, "App_Audio")
+MODEL_PATH = os.path.join(BASE_DIR, "spectrogram_classifier.onnx")
 
 # Load the trained model
-model = load_model(MODEL_PATH)
+session = ort.InferenceSession(MODEL_PATH)
+input_name = session.get_inputs()[0].name
 
 # Initialize pygame mixer for audio playback
 pygame.mixer.init()
@@ -26,13 +30,10 @@ playing_song_button = None
 
 
 def predict_spectrogram(image_path):
-    """
-    Predict whether a spectrogram belongs to AI-Generated or Not.
-    """
-    img = load_img(image_path, target_size=(IMG_HEIGHT, IMG_WIDTH))
-    img_array = img_to_array(img) / 255.0
-    img_array = img_array[np.newaxis, ...]  # Add batch dimension
-    prediction = model.predict(img_array)
+    img = Image.open(image_path).convert("RGB").resize((IMG_WIDTH, IMG_HEIGHT))
+    img_array = np.array(img, dtype=np.float32) / 255.0
+    img_array = img_array[np.newaxis, ...]
+    prediction = session.run(None, {input_name: img_array})[0]
     return "AI-Generated" if prediction[0] < 0.5 else "Not AI-Generated"
 
 
@@ -44,7 +45,7 @@ def get_cover_image(song_name, size=(50, 50)):
     if os.path.exists(cover_path):
         cover_image = Image.open(cover_path).resize(size)
     else:
-        cover_image = Image.open("App_Covers/placeholder.jpeg").resize(size)
+        cover_image = Image.open(os.path.join(COVERS_DIR, "placeholder.jpeg")).resize(size)
     return ImageTk.PhotoImage(cover_image)
 
 
