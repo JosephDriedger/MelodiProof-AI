@@ -8,15 +8,7 @@
 Requires PyInstaller (`pip install pyinstaller`):
 
 ```bash
-pyinstaller --name "MelodiProof-AI" --noconsole \
-  --collect-all tensorflow \
-  --collect-all keras \
-  --add-data "App_Spectrograms;App_Spectrograms" \
-  --add-data "App_Covers;App_Covers" \
-  --add-data "App_Audio;App_Audio" \
-  --add-data "spectrogram_classifier.h5;." \
-  --hidden-import="PIL._tkinter_finder" \
-  -y gui.py
+.venv/Scripts/pyinstaller --name "MelodiProof-AI" --noconsole --collect-all onnxruntime --add-data "App_Spectrograms;App_Spectrograms" --add-data "App_Covers;App_Covers" --add-data "App_Audio;App_Audio" --add-data "spectrogram_classifier.onnx;." --hidden-import="PIL._tkinter_finder" --runtime-hook="hook_runtime.py" -y gui.py
 ```
 
 The executable will be in `dist/MelodiProof-AI/`.
